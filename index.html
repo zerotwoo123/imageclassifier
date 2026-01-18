@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple vs Orange</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI';
+        }
+
+        body {
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0a0908;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6c757d;
+            font-size: 10.5px;
+            font-style: italic;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: #f2e8cf;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color:#0a0908;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: #800e13;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-section {
+            display: none;
+            margin-bottom: 25px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .media-container {
+            width: 100%;
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e9ecef;
+        }
+
+        .placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #adb5bd;
+            font-size: 12px;
+        }
+
+        .placeholder p {
+            margin-top: 10px;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        #webcam-canvas, #uploaded-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: white;
+        }
+
+        #uploaded-image {
+            display: none;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            background: #f2e8cf;
+            color: #0a0908;
+            border: none;
+            border-radius: 8px;
+            font-size: 10.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #386641;
+            color:white;
+        }
+
+        .action-btn.stop {
+            background: #f2e8cf;
+            margin-top: 10px;
+        }
+
+        .action-btn.stop:hover {
+            background: #800e13;
+            color: white;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .results-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.2s;
+        }
+
+        .result-item.winner {
+            background: #f2e8cf;
+            border: 2px solid #800e13;
+        }
+
+        .result-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #0a0908;
+        }
+
+        .result-probability {
+            font-size: 10.5px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #0a0908;
+        }
+
+        .result-item.winner .result-probability {
+            color: #2c3e50;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: #800e13;
+            width: 0%;
+            transition: width 0.8s ease;
+        }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 10.5px;
+            font-weight: 500;
+            font-style: italic;
+            display: none;
+            border-left: 4px solid transparent;
+        }
+
+        .status.success {
+            background: #386641;
+            color: white;
+            border-left-color: #132a13;
+            display: block;
+        }
+
+        .status.error {
+            background: #9b2226;
+            color: white;
+            border-left-color: #640d14;
+            display: block;
+        }
+
+        .status.info {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-left-color: #adb5bd;
+            display: block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+            color: #adb5bd;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .media-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Apple vs Oranges</h1>
+            <p>Upload an image or use webcam to detect apples and oranges</p>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('camera')">Webcam</button>
+            <button class="mode-btn" onclick="switchMode('upload')">Upload</button>
+        </div>
+
+        <div class="content-section active" id="camera-section">
+            <div class="media-container">
+                <div class="placeholder" id="camera-placeholder">
+                    Webcam preview
+                    <p>Click "Start Webcam" to begin</p>
+                </div>
+                <canvas id="webcam-canvas" style="display: none;"></canvas>
+            </div>
+            <button class="action-btn" onclick="initWebcam()">Start Webcam</button>
+            <button class="action-btn stop" onclick="stopWebcam()">Stop Webcam</button>
+        </div>
+
+        <div class="content-section" id="upload-section">
+            <div class="media-container">
+                <div class="placeholder" id="upload-placeholder">
+                    Image preview
+                    <p>No image selected</p>
+                </div>
+                <img id="uploaded-image" alt="Uploaded Image">
+            </div>
+            <button class="action-btn" onclick="openUploadDialog()">Choose Image</button>
+            <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+        </div>
+
+        <div class="results-section">
+            <h3>Results</h3>
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-name">Apple</div>
+                    <div class="result-probability">0%</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="apple-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="result-item">
+                    <div class="result-name">Orange</div>
+                    <div class="result-probability">0%</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="orange-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+           Teachable Machine Activity ; Jan, 18th 2026.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <script>
+        const MODEL_URL = "./model/";
+        let model, webcam;
+        let isWebcamActive = false;
+        let currentMode = 'camera';
+
+        const status = document.getElementById('status');
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const webcamCanvas = document.getElementById('webcam-canvas');
+        const uploadedImage = document.getElementById('uploaded-image');
+        const cameraPlaceholder = document.getElementById('camera-placeholder');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const appleBar = document.getElementById('apple-bar');
+        const orangeBar = document.getElementById('orange-bar');
+        const appleProbability = document.querySelector('.result-item:nth-child(1) .result-probability');
+        const orangeProbability = document.querySelector('.result-item:nth-child(2) .result-probability');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            cameraSection.classList.toggle('active', mode === 'camera');
+            uploadSection.classList.toggle('active', mode === 'upload');
+            
+            if (mode !== 'camera' && isWebcamActive) {
+                stopWebcam();
+            }
+            
+            showStatus('info', mode === 'camera' ? 'Webcam mode selected' : 'Upload mode selected');
+        }
+
+        function showStatus(type, message) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            setTimeout(() => {
+                status.className = 'status';
+            }, 3000);
+        }
+
+        async function loadModel() {
+            try {
+                showStatus('info', 'Loading model...');
+                
+                const modelURL = MODEL_URL + "model.json";
+                const metadataURL = MODEL_URL + "metadata.json";
+
+                model = await tmImage.load(modelURL, metadataURL);
+                showStatus('success', 'Model loaded');
+                return true;
+            } catch (error) {
+                console.error('Model error:', error);
+                showStatus('error', 'Failed to load model. Check model files.');
+                return false;
+            }
+        }
+
+        async function initWebcam() {
+            if (!model) {
+                const loaded = await loadModel();
+                if (!loaded) return;
+            }
+            
+            try {
+                if (isWebcamActive) {
+                    stopWebcam();
+                }
+                
+                webcam = new tmImage.Webcam(400, 300, true);
+                await webcam.setup();
+                await webcam.play();
+                
+                isWebcamActive = true;
+                cameraPlaceholder.style.display = 'none';
+                webcamCanvas.style.display = 'block';
+                webcamCanvas.width = webcam.width;
+                webcamCanvas.height = webcam.height;
+                
+                showStatus('success', 'Webcam started');
+                predictLoop();
+                
+            } catch (error) {
+                console.error("Webcam error:", error);
+                showStatus('error', 'Could not access webcam');
+            }
+        }
+
+        function stopWebcam() {
+            if (webcam && isWebcamActive) {
+                webcam.stop();
+                isWebcamActive = false;
+                cameraPlaceholder.style.display = 'block';
+                webcamCanvas.style.display = 'none';
+                resetPredictions();
+                showStatus('info', 'Webcam stopped');
+            }
+        }
+
+        async function predictLoop() {
+            if (isWebcamActive && webcam) {
+                webcam.update();
+                const ctx = webcamCanvas.getContext('2d');
+                ctx.drawImage(webcam.canvas, 0, 0, webcamCanvas.width, webcamCanvas.height);
+                await predict(webcam.canvas);
+                requestAnimationFrame(predictLoop);
+            }
+        }
+
+        function openUploadDialog() {
+            document.getElementById('imageUpload').click();
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showStatus('error', 'Please select an image file');
+                return;
+            }
+            
+            if (!model) {
+                const loaded = await loadModel();
+                if (!loaded) return;
+            }
+            
+            showStatus('info', 'Processing image...');
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    // Show the uploaded image
+                    uploadPlaceholder.style.display = 'none';
+                    uploadedImage.src = e.target.result;
+                    uploadedImage.style.display = 'block';
+                    
+                    // Create image element for prediction
+                    const img = new Image();
+                    
+                    img.onload = async function() {
+                        showStatus('info', 'Analyzing...');
+                        
+                        // Create canvas for model prediction
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = 224;
+                        tempCanvas.height = 224;
+                        const ctx = tempCanvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, 224, 224);
+                        
+                        await predict(tempCanvas);
+                        showStatus('success', 'Analysis complete');
+                    };
+                    
+                    img.onerror = function() {
+                        showStatus('error', 'Error loading image');
+                    };
+                    
+                    img.src = e.target.result;
+                } catch (error) {
+                    console.error('Image error:', error);
+                    showStatus('error', 'Error processing image');
+                }
+            };
+            
+            reader.onerror = function() {
+                showStatus('error', 'Error reading file');
+            };
+            
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        async function predict(imageElement) {
+            if (!model) {
+                showStatus('error', 'Model not loaded');
+                return;
+            }
+            
+            try {
+                const predictions = await model.predict(imageElement);
+                let appleProb = 0;
+                let orangeProb = 0;
+                
+                predictions.forEach((prediction) => {
+                    const className = prediction.className.toLowerCase();
+                    const probability = prediction.probability * 100;
+                    
+                    if (className.includes('apple')) {
+                        appleProb = probability;
+                    } else if (className.includes('orange')) {
+                        orangeProb = probability;
+                    }
+                });
+                
+                appleProbability.textContent = `${appleProb.toFixed(1)}%`;
+                orangeProbability.textContent = `${orangeProb.toFixed(1)}%`;
+                appleBar.style.width = `${appleProb}%`;
+                orangeBar.style.width = `${orangeProb}%`;
+                
+                const resultItems = document.querySelectorAll('.result-item');
+                resultItems.forEach(item => item.classList.remove('winner'));
+                
+                if (appleProb > orangeProb) {
+                    resultItems[0].classList.add('winner');
+                } else if (orangeProb > appleProb) {
+                    resultItems[1].classList.add('winner');
+                }
+                
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showStatus('error', 'Error making prediction');
+            }
+        }
+
+        function resetPredictions() {
+            appleProbability.textContent = '0%';
+            orangeProbability.textContent = '0%';
+            appleBar.style.width = '0%';
+            orangeBar.style.width = '0%';
+            document.querySelectorAll('.result-item').forEach(item => item.classList.remove('winner'));
+        }
+
+        // Load model on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(async () => {
+                await loadModel();
+            }, 500);
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (isWebcamActive && webcam) {
+                webcam.stop();
+            }
+        });
+    </script>
+</body>
+</html>
